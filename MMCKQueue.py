@@ -6,7 +6,6 @@ from enum import Enum
 
 class QueueStatus(Enum):
     WORKING = "working"
-    IDLE = "idle"
     STOP = "stop"
 
 class MMCKQueue:
@@ -19,6 +18,7 @@ class MMCKQueue:
         customerEventSim,
         nextQueueList=None,
         queueRatio=None,
+        waitCustomerFromOtherQueue = False
     ):
         self.name = name
         self.service_rate = service_rate
@@ -40,11 +40,12 @@ class MMCKQueue:
         self.nextQueueList = nextQueueList
         self.queueRatio = queueRatio
         self.queueStatus = QueueStatus.WORKING
+        self.waitCustomerFromOtherQueue = waitCustomerFromOtherQueue
 
     def arrival(self, customerEvent):
         if self.availableServers > 0:
             # Start serving the customer
-            tempServiceTime = int(random.expovariate(1 / self.service_rate) * 60)
+            tempServiceTime = int(random.expovariate( self.service_rate) )
             customerEvent.arrivalTime += tempServiceTime
             customerEvent.CustomerStatus = CustomerStatus.DEPART
             self.customerEventSim.addCustomerEvent(customerEvent)
@@ -62,7 +63,7 @@ class MMCKQueue:
         if not self.waitingQueue.empty():
             # Start serving the next customer
             nextCustomerEvent = self.waitingQueue.get()
-            service_time = int(random.expovariate(1 / self.service_rate) * 60)
+            service_time = int(random.expovariate( self.service_rate) )
             nextCustomerEvent.arrivalTime = self.currentTime + service_time
             nextCustomerEvent.CustomerStatus = CustomerStatus.DEPART
             self.customerEventSim.addCustomerEvent(nextCustomerEvent)
@@ -83,7 +84,7 @@ class MMCKQueue:
                 self.nextQueueList
             )
             if not selectedNextQueue.isFull():
-                # # tempArrivalTime = int(random.expovariate(1/selectedNextQueue.customerEventSim.arrivalRate)*60)
+                # # tempArrivalTime = int(random.expovariate(selectedNextQueue.customerEventSim.arrivalRate))
                 tempCustomerEvent = customerEvent
                 tempCustomerEvent.CustomerStatus = CustomerStatus.ARRIVAL
                 selectedNextQueue.customerEventSim.addCustomerEvent(tempCustomerEvent)
@@ -96,8 +97,12 @@ class MMCKQueue:
 
     def run(self, simulationTime):
         while self.queueStatus != QueueStatus.STOP:
+            if (not self.customerEventSim.eventList and simulationTime <= self.currentTime and not self.waitCustomerFromOtherQueue):
+                self.stop()
+                if self.nextQueueList:
+                    self.notifyOtherQueue()
+                            
             if self.customerEventSim.eventList:
-                self.queueStatus = QueueStatus.WORKING
                 event = self.customerEventSim.eventList.pop(0)
                 self.totalWaitingTime += (self.currentTime - self.previousTime) * (
                     self.servingNum + self.waitingQueue.qsize()
@@ -112,10 +117,15 @@ class MMCKQueue:
                 elif event.CustomerStatus == CustomerStatus.ARRIVAL:
                     self.arrival(event)
                 # print('\n--queueName=', self.name, 'waitingQueueSize=', self.waitingQueue.qsize(), 'servingNum=', self.servingNum)
-            else:
-                self.stop()
+
     def stop(self):
         self.queueStatus = QueueStatus.STOP
+        
+        
+    # Notify other queue if stop    
+    def notifyOtherQueue(self):
+        for queue in self.nextQueueList:
+            queue.waitCustomerFromOtherQueue = False
 
     def stats(self):
         try:

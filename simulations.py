@@ -12,7 +12,7 @@ class CustomerEvent:
     #     self.eventList = [Customer(0)]   
     #     for i in range(self.customerNum + 1):
     #         # Generate a new customer arrival time
-    #         arrivalTime = int(random.expovariate(1/self.arrivalRate)*60)
+    #         arrivalTime = int(random.expovariate(self.arrivalRate))
     #         # Create a new customer
     #         self.eventList.append(Customer(arrivalTime + self.eventList[i].arrivalTime, CustomerStatus.ARRIVAL))
     
@@ -24,7 +24,7 @@ class CustomerEvent:
         self.eventList.append(Customer(arrivalTime))   
         for i in range(customerNum + 1):
             # Generate a new customer arrival time
-            arrivalTime = int(random.expovariate(1/self.arrivalRate)*60)
+            arrivalTime = int(random.expovariate(self.arrivalRate))
             # Create a new customer
             self.eventList.append(Customer(arrivalTime + self.eventList[i].arrivalTime, CustomerStatus.ARRIVAL))
 
@@ -34,7 +34,7 @@ class CustomerEvent:
         while True:
             # Create a new customer
             if (self.eventList[-1].arrivalTime < simulationTime):
-                arrivalTime = int(random.expovariate(1/self.arrivalRate)*60)
+                arrivalTime = int(random.expovariate(self.arrivalRate))
                 self.eventList.append(Customer(arrivalTime + self.eventList[-1].arrivalTime, CustomerStatus.ARRIVAL))
             else:
                 break

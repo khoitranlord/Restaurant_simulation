@@ -9,17 +9,21 @@ from threading import Thread
 if __name__ == '__main__':
     totalServedCustomers = 0
     entranceCustomerEvent = CustomerEvent(0.05)
-    foodCustomerEvent = CustomerEvent(0.5)
-    drinkCustomerEvent = CustomerEvent(0.5)
+    foodCustomerEvent = CustomerEvent(0.05)
+    drinkCustomerEvent = CustomerEvent(0.05)
 
-    simulationTime = 500
-
+    simulationTime = 1000
+    
     entranceCustomerEvent.timeGenerate(simulationTime = simulationTime, arrivalTime = 0)
     
-    drinkMMCK = MMCKQueue("drink_queue",0.5, 10, 100, drinkCustomerEvent)
-    foodMMCK = MMCKQueue("food_queue",0.5, 10, 100, foodCustomerEvent)
-    entranceMMCK= MMCKQueue("entrance_queue",0.5, 5, 100, entranceCustomerEvent, nextQueueList = [ foodMMCK, drinkMMCK], queueRatio = [1, 1])
+    drinkMMCK = MMCKQueue("drink_queue",0.04, 10, 15, drinkCustomerEvent, waitCustomerFromOtherQueue = True)
+    foodMMCK = MMCKQueue("food_queue",0.03, 10, 15, foodCustomerEvent, waitCustomerFromOtherQueue = True)
+    entranceMMCK= MMCKQueue("entrance_queue",0.05, 5, 15, entranceCustomerEvent, nextQueueList = [ foodMMCK, drinkMMCK], queueRatio = [1, 1])
+    
+    
     print(len(entranceMMCK.customerEventSim.eventList),' customer go to entrance', entranceMMCK.customerEventSim.eventList)
+    
+    
     threads     = [None, None, None]
     threads[0]  = Thread(target=entranceMMCK.run, args=(simulationTime, ))
     threads[1]  = Thread(target=drinkMMCK.run, args=(simulationTime, ))
